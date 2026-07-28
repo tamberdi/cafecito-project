@@ -20,6 +20,10 @@ function Profile() {
   const [newIsNative, setNewIsNative] = useState(false);
   const [langError, setLangError] = useState("");
 
+  const [editingLangId, setEditingLangId] = useState(null);
+  const [editLevel, setEditLevel] = useState("");
+  const [editIsNative, setEditIsNative] = useState(false);
+
   useEffect(() => {
     if (!userId) return;
     loadUser();
@@ -99,6 +103,26 @@ function Profile() {
     }
   }
 
+  function startEditLanguage(lang) {
+    setEditingLangId(lang.id);
+    setEditLevel(lang.level);
+    setEditIsNative(lang.isNative);
+  }
+
+  async function handleSaveLanguage(id) {
+    setLangError("");
+    try {
+      const updated = await apiFetch(`/languages/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ level: editLevel, isNative: editIsNative }),
+      });
+      setLanguages(languages.map((l) => (l.id === id ? updated : l)));
+      setEditingLangId(null);
+    } catch (err) {
+      setLangError("Could not update language.");
+    }
+  }
+
   if (error && !user) return <div className="p-8 text-red-600">{error}</div>;
   if (!user) return <div className="p-8">Loading...</div>;
 
@@ -150,16 +174,58 @@ function Profile() {
         {langError && <p className="text-red-600 text-sm mb-2">{langError}</p>}
 
         <div className="flex flex-col gap-2 mb-4">
-          {languages.map((lang) => (
-            <div key={lang.id} className="flex justify-between items-center border p-2 rounded">
-              <span>
-                {lang.language} — {lang.level} {lang.isNative && "(native)"}
-              </span>
-              <button onClick={() => handleDeleteLanguage(lang.id)} className="text-red-600 text-sm">
-                Remove
-              </button>
-            </div>
-          ))}
+          {languages.map((lang) =>
+            editingLangId === lang.id ? (
+              <div key={lang.id} className="border p-2 rounded flex flex-col gap-2">
+                <span className="font-medium">{lang.language}</span>
+                <select
+                  value={editLevel}
+                  onChange={(e) => setEditLevel(e.target.value)}
+                  className="border p-2 rounded"
+                >
+                  {LEVELS.map((lvl) => (
+                    <option key={lvl} value={lvl}>{lvl}</option>
+                  ))}
+                </select>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={editIsNative}
+                    onChange={(e) => setEditIsNative(e.target.checked)}
+                  />
+                  Native language
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSaveLanguage(lang.id)}
+                    className="bg-blue-600 text-white p-2 rounded flex-1 text-sm"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingLangId(null)}
+                    className="border p-2 rounded flex-1 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div key={lang.id} className="flex justify-between items-center border p-2 rounded">
+                <span>
+                  {lang.language} — {lang.level} {lang.isNative && "(native)"}
+                </span>
+                <div className="flex gap-3">
+                  <button onClick={() => startEditLanguage(lang)} className="text-blue-600 text-sm">
+                    Edit
+                  </button>
+                  <button onClick={() => handleDeleteLanguage(lang.id)} className="text-red-600 text-sm">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )
+          )}
         </div>
 
         <form onSubmit={handleAddLanguage} className="flex flex-col gap-2">
