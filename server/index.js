@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import pool from "./db/connection.js"
 import usersRouter from "./routes/users.js"
+import languagesRouter from "./routes/languages.js";
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use("/users", usersRouter);
+app.use("/languages", languagesRouter);
 
 //Health-check route 
 app.get("/", async (req, res) => {

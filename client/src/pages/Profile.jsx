@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 
+const LEVELS = ["beginner", "intermediate", "advanced", "fluent"];
+
 function Profile() {
   const [searchParams] = useSearchParams();
   const userId = searchParams.get("userId");
@@ -12,9 +14,16 @@ function Profile() {
   const [timezone, setTimezone] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [languages, setLanguages] = useState([]);
+  const [newLang, setNewLang] = useState("");
+  const [newLevel, setNewLevel] = useState("beginner");
+  const [newIsNative, setNewIsNative] = useState(false);
+  const [langError, setLangError] = useState("");
+
   useEffect(() => {
     if (!userId) return;
     loadUser();
+    loadLanguages();
   }, [userId]);
 
   function loadUser() {
@@ -27,11 +36,16 @@ function Profile() {
       .catch(() => setError("Could not load profile."));
   }
 
+  function loadLanguages() {
+    apiFetch(`/languages/user/${userId}`)
+      .then(setLanguages)
+      .catch(() => setLangError("Could not load languages."));
+  }
+
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
     setError("");
-
     try {
       const updated = await apiFetch(`/users/${userId}`, {
         method: "PATCH",
@@ -52,13 +66,46 @@ function Profile() {
     setIsEditing(false);
   }
 
+  async function handleAddLanguage(e) {
+    e.preventDefault();
+    setLangError("");
+    if (!newLang.trim()) return;
+
+    try {
+      const created = await apiFetch("/languages", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: parseInt(userId),
+          language: newLang,
+          level: newLevel,
+          isNative: newIsNative,
+        }),
+      });
+      setLanguages([...languages, created]);
+      setNewLang("");
+      setNewLevel("beginner");
+      setNewIsNative(false);
+    } catch (err) {
+      setLangError("Could not add language.");
+    }
+  }
+
+  async function handleDeleteLanguage(id) {
+    try {
+      await apiFetch(`/languages/${id}`, { method: "DELETE" });
+      setLanguages(languages.filter((l) => l.id !== id));
+    } catch (err) {
+      setLangError("Could not remove language.");
+    }
+  }
+
   if (error && !user) return <div className="p-8 text-red-600">{error}</div>;
   if (!user) return <div className="p-8">Loading...</div>;
 
-  if (isEditing) {
-    return (
-      <div className="max-w-md mx-auto mt-16 p-6">
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
+  return (
+    <div className="max-w-md mx-auto mt-16 p-6">
+      {isEditing ? (
+        <form onSubmit={handleSave} className="flex flex-col gap-4 mb-8">
           <input
             type="text"
             value={name}
@@ -75,40 +122,76 @@ function Profile() {
           />
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-blue-600 text-white p-2 rounded flex-1"
-            >
+            <button type="submit" disabled={saving} className="bg-blue-600 text-white p-2 rounded flex-1">
               {saving ? "Saving..." : "Save"}
             </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="border p-2 rounded flex-1"
-            >
+            <button type="button" onClick={handleCancel} className="border p-2 rounded flex-1">
               Cancel
             </button>
           </div>
         </form>
-      </div>
-    );
-  }
+      ) : (
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-blue-600 mb-4">{user.name}</h1>
+          <p className="text-gray-600">{user.email}</p>
+          <p className="text-gray-600">{user.timezone}</p>
+          <p className="text-sm text-gray-400 mt-4">
+            Member since {new Date(user.joinedAt).toLocaleDateString()}
+          </p>
+          <button onClick={() => setIsEditing(true)} className="mt-6 border p-2 rounded w-full">
+            Edit Profile
+          </button>
+        </div>
+      )}
 
-  return (
-    <div className="max-w-md mx-auto mt-16 p-6">
-      <h1 className="text-3xl font-bold text-blue-600 mb-4">{user.name}</h1>
-      <p className="text-gray-600">{user.email}</p>
-      <p className="text-gray-600">{user.timezone}</p>
-      <p className="text-sm text-gray-400 mt-4">
-        Member since {new Date(user.joinedAt).toLocaleDateString()}
-      </p>
-      <button
-        onClick={() => setIsEditing(true)}
-        className="mt-6 border p-2 rounded w-full"
-      >
-        Edit Profile
-      </button>
+      <div>
+        <h2 className="text-xl font-bold mb-3">Languages</h2>
+
+        {langError && <p className="text-red-600 text-sm mb-2">{langError}</p>}
+
+        <div className="flex flex-col gap-2 mb-4">
+          {languages.map((lang) => (
+            <div key={lang.id} className="flex justify-between items-center border p-2 rounded">
+              <span>
+                {lang.language} — {lang.level} {lang.isNative && "(native)"}
+              </span>
+              <button onClick={() => handleDeleteLanguage(lang.id)} className="text-red-600 text-sm">
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleAddLanguage} className="flex flex-col gap-2">
+          <input
+            type="text"
+            placeholder="Language"
+            value={newLang}
+            onChange={(e) => setNewLang(e.target.value)}
+            className="border p-2 rounded"
+          />
+          <select
+            value={newLevel}
+            onChange={(e) => setNewLevel(e.target.value)}
+            className="border p-2 rounded"
+          >
+            {LEVELS.map((lvl) => (
+              <option key={lvl} value={lvl}>{lvl}</option>
+            ))}
+          </select>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={newIsNative}
+              onChange={(e) => setNewIsNative(e.target.checked)}
+            />
+            Native language
+          </label>
+          <button type="submit" className="bg-blue-600 text-white p-2 rounded">
+            Add Language
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
