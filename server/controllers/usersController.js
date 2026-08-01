@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import pool from "../db/connection.js";
-import { users } from "../db/schema.js";
+import { users, languages } from "../db/schema.js";
 
 const db = drizzle(pool);
 
@@ -57,5 +57,50 @@ export async function updateUser(req, res) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to update user" });
+  }
+}
+
+export async function browseUsers(req, res) {
+  const { learning, native, currentUserId } = req.query;
+
+  try {
+    let matchedUserIds = null;
+
+    if (learning) {
+      const nativeSpeakers = await db
+        .select({ userId: languages.userId })
+        .from(languages)
+        .where(and(eq(languages.language, learning), eq(languages.isNative, true)));
+      matchedUserIds = new Set(nativeSpeakers.map((r) => r.userId));
+    }
+
+    if (native) {
+      const learners = await db
+        .select({ userId: languages.userId })
+        .from(languages)
+        .where(and(eq(languages.language, native), eq(languages.isNative, false)));
+      const learnerIds = new Set(learners.map((r) => r.userId));
+
+      matchedUserIds = matchedUserIds
+        ? new Set([...matchedUserIds].filter((id) => learnerIds.has(id)))
+        : learnerIds;
+    }
+
+    let allUsers = await db.select().from(users);
+
+    if (currentUserId) {
+      allUsers = allUsers.filter((u) => u.id !== parseInt(currentUserId));
+    }
+
+    if (matchedUserIds) {
+      allUsers = allUsers.filter((u) => matchedUserIds.has(u.id));
+    }
+
+    // TODO: exclude blocked users once issue #13 is built
+
+    res.json(allUsers);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to browse users" });
   }
 }
