@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import pool from "./db/connection.js"
 import usersRouter from "./routes/users.js"
 import languagesRouter from "./routes/languages.js";
+import partnershipsRouter from "./routes/partnerships.js";
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/users", usersRouter);
 app.use("/languages", languagesRouter);
+app.use("/partnerships", partnershipsRouter);
 
 //Health-check route 
 app.get("/", async (req, res) => {
