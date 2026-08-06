@@ -23,8 +23,12 @@ export async function getPartnershipSessions(req, res) {
 export async function createSession(req, res) {
   const { partnershipId, sessionDate, durationMinutes, notes } = req.body;
 
-  if (!partnershipId || !sessionDate || !durationMinutes) {
+  if (!partnershipId || !sessionDate || durationMinutes === undefined || durationMinutes === null) {
     return res.status(422).json({ error: "partnershipId, sessionDate, and durationMinutes are required" });
+  }
+
+  if (durationMinutes <= 0 || durationMinutes > 480) {
+    return res.status(422).json({ error: "Duration must be between 1 and 480 minutes" });
   }
 
   try {
@@ -42,6 +46,10 @@ export async function createSession(req, res) {
 export async function updateSession(req, res) {
   const { id } = req.params;
   const { sessionDate, durationMinutes, notes } = req.body;
+
+  if (durationMinutes !== undefined && (durationMinutes <= 0 || durationMinutes > 480)) {
+    return res.status(422).json({ error: "Duration must be between 1 and 480 minutes" });
+  }
 
   try {
     const [updated] = await db

@@ -6,7 +6,8 @@ export async function apiFetch(path, options = {}) {
     ...options,
   })
   if (!res.ok) {
-    throw new Error(`API error: ${res.status}`)
+    const errorBody = await res.json().catch(() => ({}))
+    throw new Error(errorBody.error || `API error: ${res.status}`)
   }
   if (res.status === 204) {
     return null

@@ -25,27 +25,27 @@ function SessionHistory() {
   }
 
   async function handleAddSession(e) {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      const created = await apiFetch("/sessions", {
-        method: "POST",
-        body: JSON.stringify({
-          partnershipId: parseInt(partnershipId),
-          sessionDate,
-          durationMinutes: parseInt(durationMinutes),
-          notes,
-        }),
-      });
-      setSessions([...sessions, created]);
-      setSessionDate("");
-      setDurationMinutes("");
-      setNotes("");
-    } catch (err) {
-      setError("Could not log session.");
-    }
+  try {
+    const created = await apiFetch("/sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        partnershipId: parseInt(partnershipId),
+        sessionDate,
+        durationMinutes: parseInt(durationMinutes),
+        notes,
+      }),
+    });
+    setSessions([...sessions, created]);
+    setSessionDate("");
+    setDurationMinutes("");
+    setNotes("");
+  } catch (err) {
+    setError(err.message);
   }
+}
 
   async function handleDelete(id) {
     try {
