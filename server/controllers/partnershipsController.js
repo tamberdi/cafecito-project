@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq, or, and } from "drizzle-orm";
+import { eq, or, and, desc } from "drizzle-orm";
 import pool from "../db/connection.js";
-import { partnerships, users } from "../db/schema.js";
+import { partnerships, sessions } from "../db/schema.js";
 
 const db = drizzle(pool);
 
@@ -88,5 +88,47 @@ export async function getUserPartnerships(req, res) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch partnerships" });
+  }
+}
+
+export async function getPartnershipStreak(req, res) {
+  const { id } = req.params;
+
+  try {
+    const partnershipSessions = await db
+      .select({ sessionDate: sessions.sessionDate })
+      .from(sessions)
+      .where(eq(sessions.partnershipId, parseInt(id)))
+      .orderBy(desc(sessions.sessionDate));
+
+    if (partnershipSessions.length === 0) {
+      return res.json({ streak: 0 });
+    }
+
+    // Get unique dates, most recent first
+    const uniqueDates = [...new Set(partnershipSessions.map((s) => s.sessionDate))];
+
+    let streak = 0;
+    let expectedDate = new Date();
+    expectedDate.setHours(0, 0, 0, 0);
+
+    for (const dateStr of uniqueDates) {
+      const sessionDate = new Date(dateStr);
+      sessionDate.setHours(0, 0, 0, 0);
+
+      const diffDays = Math.round((expectedDate - sessionDate) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0 || diffDays === 1) {
+        streak++;
+        expectedDate = sessionDate;
+      } else if (diffDays > 1) {
+        break;
+      }
+    }
+
+    res.json({ streak });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to calculate streak" });
   }
 }

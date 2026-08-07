@@ -6,6 +6,7 @@ function Dashboard() {
   const [searchParams] = useSearchParams();
   const userId = searchParams.get("userId");
   const [partnerships, setPartnerships] = useState([]);
+  const [streaks, setStreaks] = useState({});
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -13,10 +14,21 @@ function Dashboard() {
     loadPartnerships();
   }, [userId]);
 
-  function loadPartnerships() {
-    apiFetch(`/partnerships/user/${userId}`)
-      .then(setPartnerships)
-      .catch(() => setError("Could not load partnerships."));
+  async function loadPartnerships() {
+    try {
+      const data = await apiFetch(`/partnerships/user/${userId}`);
+      setPartnerships(data);
+
+      const streakEntries = await Promise.all(
+        data.map(async (p) => {
+          const result = await apiFetch(`/partnerships/${p.id}/streak`);
+          return [p.id, result.streak];
+        })
+      );
+      setStreaks(Object.fromEntries(streakEntries));
+    } catch (err) {
+      setError("Could not load partnerships.");
+    }
   }
 
   async function updateStatus(id, status) {
@@ -44,36 +56,46 @@ function Dashboard() {
         {partnerships.map((p) => {
           const otherUserId = p.userAId === parseInt(userId) ? p.userBId : p.userAId;
           const isRecipient = p.userBId === parseInt(userId);
+          const streak = streaks[p.id] ?? "...";
 
           return (
-            <div key={p.id} className="border p-4 rounded">
-              <p className="font-medium">Partner: User #{otherUserId}</p>
-              <p className="text-sm text-gray-500">Status: {p.status}</p>
+            <div key={p.id} className="border p-4 rounded flex justify-between items-start">
+              <div>
+                <p className="font-medium">Partner: User #{otherUserId}</p>
+                <p className="text-sm text-gray-500">Status: {p.status}</p>
 
-              {p.status === "pending" && isRecipient && (
-                <div className="flex gap-2 mt-2">
+                {p.status === "pending" && isRecipient && (
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => updateStatus(p.id, "active")}
+                      className="bg-blue-600 text-white text-sm p-2 rounded flex-1"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => updateStatus(p.id, "declined")}
+                      className="border text-sm p-2 rounded flex-1"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                )}
+
+                {p.status === "active" && (
                   <button
-                    onClick={() => updateStatus(p.id, "active")}
-                    className="bg-blue-600 text-white text-sm p-2 rounded flex-1"
+                    onClick={() => updateStatus(p.id, "ended")}
+                    className="text-red-600 text-sm mt-2"
                   >
-                    Accept
+                    End Partnership
                   </button>
-                  <button
-                    onClick={() => updateStatus(p.id, "declined")}
-                    className="border text-sm p-2 rounded flex-1"
-                  >
-                    Decline
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
 
               {p.status === "active" && (
-                <button
-                  onClick={() => updateStatus(p.id, "ended")}
-                  className="text-red-600 text-sm mt-2"
-                >
-                  End Partnership
-                </button>
+                <div className="text-right">
+                  <p className="text-xl font-bold">{streak}</p>
+                  <p className="text-xs text-gray-500">day streak</p>
+                </div>
               )}
             </div>
           );
