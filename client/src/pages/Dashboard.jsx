@@ -9,6 +9,13 @@ function Dashboard() {
   const [streaks, setStreaks] = useState({});
   const [error, setError] = useState("");
 
+  const [modalPartnershipId, setModalPartnershipId] = useState(null);
+  const [sessionDate, setSessionDate] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState("");
+  const [notes, setNotes] = useState("");
+  const [modalError, setModalError] = useState("");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     if (!userId) return;
     loadPartnerships();
@@ -40,6 +47,42 @@ function Dashboard() {
       loadPartnerships();
     } catch (err) {
       setError("Could not update partnership.");
+    }
+  }
+
+  function openModal(partnershipId) {
+    setModalPartnershipId(partnershipId);
+    setSessionDate("");
+    setDurationMinutes("");
+    setNotes("");
+    setModalError("");
+  }
+
+  function closeModal() {
+    setModalPartnershipId(null);
+  }
+
+  async function handleLogSession(e) {
+    e.preventDefault();
+    setModalError("");
+    setSaving(true);
+
+    try {
+      await apiFetch("/sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          partnershipId: modalPartnershipId,
+          sessionDate,
+          durationMinutes: parseInt(durationMinutes),
+          notes,
+        }),
+      });
+      closeModal();
+      loadPartnerships();
+    } catch (err) {
+      setModalError(err.message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -82,12 +125,20 @@ function Dashboard() {
                 )}
 
                 {p.status === "active" && (
-                  <button
-                    onClick={() => updateStatus(p.id, "ended")}
-                    className="text-red-600 text-sm mt-2"
-                  >
-                    End Partnership
-                  </button>
+                  <div className="flex gap-3 mt-2">
+                    <button
+                      onClick={() => openModal(p.id)}
+                      className="bg-blue-600 text-white text-sm p-2 rounded"
+                    >
+                      + Log session
+                    </button>
+                    <button
+                      onClick={() => updateStatus(p.id, "ended")}
+                      className="text-red-600 text-sm"
+                    >
+                      End Partnership
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -101,6 +152,54 @@ function Dashboard() {
           );
         })}
       </div>
+
+      {modalPartnershipId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h2 className="text-lg font-bold mb-4">Log a session</h2>
+            <form onSubmit={handleLogSession} className="flex flex-col gap-3">
+              <input
+                type="date"
+                value={sessionDate}
+                onChange={(e) => setSessionDate(e.target.value)}
+                className="border p-2 rounded"
+                required
+              />
+              <input
+                type="number"
+                placeholder="Duration (minutes)"
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(e.target.value)}
+                className="border p-2 rounded"
+                required
+              />
+              <textarea
+                placeholder="Notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="border p-2 rounded"
+              />
+              {modalError && <p className="text-red-600 text-sm">{modalError}</p>}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-blue-600 text-white p-2 rounded flex-1"
+                >
+                  {saving ? "Saving..." : "Save session"}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="border p-2 rounded flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
