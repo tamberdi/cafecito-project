@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq, and, ne, or } from "drizzle-orm";
+import { eq, and, ne, or, sql } from "drizzle-orm";
 import pool from "../db/connection.js";
-import { users, languages, blocks } from "../db/schema.js";
+import { users, languages, blocks, partnerships, sessions } from "../db/schema.js";
 
 const db = drizzle(pool);
 
@@ -26,13 +26,31 @@ export async function createUser(req, res) {
 
 export async function getUser(req, res) {
   const { id } = req.params;
+  const userId = parseInt(id);
 
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, parseInt(id)));
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.json(user);
+
+    const userPartnerships = await db
+      .select({ id: partnerships.id })
+      .from(partnerships)
+      .where(or(eq(partnerships.userAId, userId), eq(partnerships.userBId, userId)));
+
+    const partnershipIds = userPartnerships.map((p) => p.id);
+
+    let sessionCount = 0;
+    if (partnershipIds.length > 0) {
+      const sessionResults = await db
+        .select({ id: sessions.id })
+        .from(sessions)
+        .where(sql`${sessions.partnershipId} IN ${partnershipIds}`);
+      sessionCount = sessionResults.length;
+    }
+
+    res.json({ ...user, sessionCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch user" });

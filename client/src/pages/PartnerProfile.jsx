@@ -83,8 +83,11 @@ function PartnerProfile() {
 
   return (
     <div className="max-w-md mx-auto mt-16 p-6">
-      <h1 className="text-3xl font-bold text-blue-600 mb-4">{partner.name}</h1>
-      <p className="text-gray-600 mb-4">{partner.timezone}</p>
+     <h1 className="text-3xl font-bold text-blue-600 mb-4">{partner.name}</h1>
+      <p className="text-gray-600">{partner.timezone}</p>
+      <p className="text-sm text-gray-400 mb-4">
+        Member since {new Date(partner.joinedAt).toLocaleDateString()} · {partner.sessionCount} session{partner.sessionCount !== 1 ? "s" : ""} completed
+      </p>
 
       <div className="mb-6">
         <h2 className="text-lg font-bold mb-2">Languages</h2>
