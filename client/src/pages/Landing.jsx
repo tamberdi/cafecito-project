@@ -20,14 +20,36 @@ function Landing() {
       });
       navigate(`/profile?userId=${user.id}`);
     } catch (err) {
-      setError("Something went wrong creating your account.");
+      setError(err.message);
     }
   }
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-6">
-      <h1 className="text-3xl font-bold text-blue-600 mb-6">Cafecito</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <div className="max-w-md mx-auto mt-16 p-6 text-center">
+      <h1 className="text-4xl font-bold text-blue-600 mb-2">Cafecito</h1>
+      <p className="text-gray-500 mb-10">
+        Practice a new language like you're catching up with a friend — no pressure, just consistent conversation.
+      </p>
+
+      <div className="flex justify-center gap-8 mb-10">
+        <div className="w-24">
+          <div className="text-2xl mb-1">🗣️</div>
+          <p className="text-xs font-medium">Find a partner</p>
+          <p className="text-xs text-gray-400">Matched by language and timezone</p>
+        </div>
+        <div className="w-24">
+          <div className="text-2xl mb-1">📝</div>
+          <p className="text-xs font-medium">Log sessions</p>
+          <p className="text-xs text-gray-400">Quick notes, right after you talk</p>
+        </div>
+        <div className="w-24">
+          <div className="text-2xl mb-1">🔥</div>
+          <p className="text-xs font-medium">Build a streak</p>
+          <p className="text-xs text-gray-400">Stay consistent, see your progress</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
         <input
           type="text"
           placeholder="Name"
