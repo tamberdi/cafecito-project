@@ -154,8 +154,9 @@ function Dashboard() {
       </div>
 
       {modalPartnershipId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-lg p-6 pb-20 sm:pb-6 w-full sm:max-w-sm">
+          <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mb-4 sm:hidden"></div>
             <h2 className="text-lg font-bold mb-4">Log a session</h2>
             <form onSubmit={handleLogSession} className="flex flex-col gap-3">
               <input

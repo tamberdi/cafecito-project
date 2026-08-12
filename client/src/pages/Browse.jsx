@@ -36,7 +36,7 @@ function Browse() {
     <div className="max-w-2xl mx-auto mt-16 p-6">
       <h1 className="text-3xl font-bold text-blue-600 mb-6">Browse Partners</h1>
 
-      <form onSubmit={handleFilter} className="flex gap-2 mb-6">
+      <form onSubmit={handleFilter} className="flex flex-col sm:flex-row gap-2 mb-6">
         <input
           type="text"
           placeholder="They speak (e.g. Spanish)"
