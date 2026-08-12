@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, or } from "drizzle-orm";
 import pool from "../db/connection.js";
-import { users, languages } from "../db/schema.js";
+import { users, languages, blocks } from "../db/schema.js";
 
 const db = drizzle(pool);
 
@@ -16,7 +16,7 @@ export async function createUser(req, res) {
     const [newUser] = await db.insert(users).values({ name, email, timezone }).returning();
     res.status(201).json(newUser);
   } catch (err) {
-    if (err.code === "23505") {
+    if (err.cause?.code === "23505") {
       return res.status(422).json({ error: "Email already in use" });
     }
     console.error(err);
@@ -92,13 +92,32 @@ export async function browseUsers(req, res) {
       allUsers = allUsers.filter((u) => u.id !== parseInt(currentUserId));
     }
 
-    if (matchedUserIds) {
+   if (matchedUserIds) {
       allUsers = allUsers.filter((u) => matchedUserIds.has(u.id));
     }
 
-    // TODO: exclude blocked users once issue #13 is built
+    if (currentUserId) {
+      const blockedResult = await db
+        .select()
+        .from(blocks)
+        .where(
+          or(
+            eq(blocks.blockerId, parseInt(currentUserId)),
+            eq(blocks.blockedId, parseInt(currentUserId))
+          )
+        );
+
+      const blockedIds = new Set(
+        blockedResult.map((b) =>
+          b.blockerId === parseInt(currentUserId) ? b.blockedId : b.blockerId
+        )
+      );
+
+      allUsers = allUsers.filter((u) => !blockedIds.has(u.id));
+    }
 
     res.json(allUsers);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to browse users" });

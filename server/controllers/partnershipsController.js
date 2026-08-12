@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, or, and, desc } from "drizzle-orm";
 import pool from "../db/connection.js";
-import { partnerships, sessions } from "../db/schema.js";
+import { partnerships, users, blocks, sessions } from "../db/schema.js";
 
 const db = drizzle(pool);
 
@@ -35,7 +35,22 @@ export async function createPartnership(req, res) {
 
     // TODO: reject if either user has blocked the other, once issue #13 is built
 
+    const blockCheck = await db
+      .select()
+      .from(blocks)
+      .where(
+        or(
+          and(eq(blocks.blockerId, userAId), eq(blocks.blockedId, userBId)),
+          and(eq(blocks.blockerId, userBId), eq(blocks.blockedId, userAId))
+        )
+      );
+
+    if (blockCheck.length > 0) {
+      return res.status(422).json({ error: "Cannot create a partnership — one user has blocked the other" });
+    }
+
     const today = new Date().toISOString().split("T")[0];
+
     const [newPartnership] = await db
       .insert(partnerships)
       .values({ userAId, userBId, matchDate: today, status: "pending" })

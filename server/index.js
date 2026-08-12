@@ -8,6 +8,7 @@ import partnershipsRouter from "./routes/partnerships.js";
 import sessionsRouter from "./routes/sessions.js";
 import { sessions } from "./db/schema.js";
 import topicsRouter from "./routes/topics.js";
+import safetyRouter from "./routes/safety.js";
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use("/languages", languagesRouter);
 app.use("/partnerships", partnershipsRouter);
 app.use("/sessions", sessionsRouter);
 app.use("/topics", topicsRouter);
+app.use("/safety", safetyRouter);
 
 //Health-check route 
 app.get("/", async (req, res) => {
