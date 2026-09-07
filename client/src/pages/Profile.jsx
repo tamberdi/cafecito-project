@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
+import { useUser } from "../context/UserContext";
 
 const LEVELS = ["beginner", "intermediate", "advanced", "fluent"];
 
 function Profile() {
-  const [searchParams] = useSearchParams();
-  const userId = searchParams.get("userId");
+  const { userId } = useUser();
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false);

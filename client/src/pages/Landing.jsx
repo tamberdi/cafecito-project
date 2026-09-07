@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/client";
+import { useUser } from "../context/UserContext";
 
 function Landing() {
   const [name, setName] = useState("");
@@ -8,6 +9,7 @@ function Landing() {
   const [timezone, setTimezone] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { setUserId } = useUser();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -18,7 +20,8 @@ function Landing() {
         method: "POST",
         body: JSON.stringify({ name, email, timezone }),
       });
-      navigate(`/profile?userId=${user.id}`);
+      setUserId(user.id);
+      navigate("/profile");
     } catch (err) {
       setError(err.message);
     }

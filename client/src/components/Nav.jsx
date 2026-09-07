@@ -1,16 +1,12 @@
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 function Nav() {
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const userId = searchParams.get("userId");
-  const suffix = userId ? `?userId=${userId}` : "";
 
   const links = [
-    { to: `/browse${suffix}`, label: "Browse", match: "/browse" },
-    { to: `/sessions${suffix}`, label: "Sessions", match: "/sessions" },
-    { to: `/dashboard${suffix}`, label: "Dashboard", match: "/dashboard" },
-    { to: `/profile${suffix}`, label: "Profile", match: "/profile" },
+    { to: "/browse", label: "Browse", match: "/browse" },
+    { to: "/dashboard", label: "Dashboard", match: "/dashboard" },
+    { to: "/profile", label: "Profile", match: "/profile" },
   ];
 
   function isActive(match) {
@@ -19,7 +15,6 @@ function Nav() {
 
   return (
     <>
-      {/* Mobile: bottom tab bar */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2 sm:hidden z-40">
         {links.map((link) => (
           <Link
@@ -32,7 +27,6 @@ function Nav() {
         ))}
       </nav>
 
-      {/* Desktop: top nav */}
       <nav className="hidden sm:flex justify-center gap-6 py-4 border-b mb-6">
         <Link to="/" className="font-bold text-blue-600">Cafecito</Link>
         {links.map((link) => (

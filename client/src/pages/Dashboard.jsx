@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
+import { useUser } from "../context/UserContext";
+import { Link } from "react-router-dom";
 
 function Dashboard() {
-  const [searchParams] = useSearchParams();
-  const userId = searchParams.get("userId");
+  const { userId } = useUser();
   const [partnerships, setPartnerships] = useState([]);
   const [streaks, setStreaks] = useState({});
   const [error, setError] = useState("");
@@ -125,13 +125,16 @@ function Dashboard() {
                 )}
 
                 {p.status === "active" && (
-                  <div className="flex gap-3 mt-2">
+                  <div className="flex gap-3 mt-2 items-center">
                     <button
                       onClick={() => openModal(p.id)}
                       className="bg-blue-600 text-white text-sm p-2 rounded"
                     >
                       + Log session
                     </button>
+                    <Link to={`/sessions?partnershipId=${p.id}`} className="text-blue-600 text-sm">
+                      View history
+                    </Link>
                     <button
                       onClick={() => updateStatus(p.id, "ended")}
                       className="text-red-600 text-sm"
