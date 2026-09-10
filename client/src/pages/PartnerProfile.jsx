@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/client";
+import { useUser } from "../context/UserContext";
 
 function PartnerProfile() {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const currentUserId = searchParams.get("userId");
+  const { userId: currentUserId } = useUser();
   const navigate = useNavigate();
 
   const [partner, setPartner] = useState(null);
@@ -24,14 +24,14 @@ function PartnerProfile() {
 
   async function handleSendRequest() {
     if (!currentUserId) {
-      setError("You need to be logged in to send a request. Try visiting this page with ?userId=YOUR_ID for now.");
+      setError("You need to be signed in to send a request.");
       return;
     }
 
     try {
       await apiFetch("/partnerships", {
         method: "POST",
-        body: JSON.stringify({ userAId: parseInt(currentUserId), userBId: parseInt(id) }),
+        body: JSON.stringify({ userAId: currentUserId, userBId: parseInt(id) }),
       });
       setRequestStatus("Request sent!");
     } catch (err) {
@@ -47,7 +47,7 @@ function PartnerProfile() {
       await apiFetch("/safety/reports", {
         method: "POST",
         body: JSON.stringify({
-          reporterId: parseInt(currentUserId),
+          reporterId: currentUserId,
           reportedId: parseInt(id),
           reason: reportReason,
         }),
@@ -69,7 +69,7 @@ function PartnerProfile() {
     try {
       await apiFetch("/safety/blocks", {
         method: "POST",
-        body: JSON.stringify({ blockerId: parseInt(currentUserId), blockedId: parseInt(id) }),
+        body: JSON.stringify({ blockerId: currentUserId, blockedId: parseInt(id) }),
       });
       setActionStatus("User blocked.");
       setTimeout(() => navigate("/browse"), 1000);
@@ -83,7 +83,7 @@ function PartnerProfile() {
 
   return (
     <div className="max-w-md mx-auto mt-16 p-6">
-     <h1 className="text-3xl font-bold text-blue-600 mb-4">{partner.name}</h1>
+      <h1 className="text-3xl font-bold text-blue-600 mb-4">{partner.name}</h1>
       <p className="text-gray-600">{partner.timezone}</p>
       <p className="text-sm text-gray-400 mb-4">
         Member since {new Date(partner.joinedAt).toLocaleDateString()} · {partner.sessionCount} session{partner.sessionCount !== 1 ? "s" : ""} completed
