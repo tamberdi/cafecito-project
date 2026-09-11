@@ -1,17 +1,19 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { UserProvider } from './context/UserContext.jsx'
-import Nav from './components/Nav.jsx'
-import Landing from './pages/Landing.jsx'
-import Browse from './pages/Browse.jsx'
-import PartnerProfile from './pages/PartnerProfile.jsx'
-import Dashboard from './pages/Dashboard.jsx'
-import SessionHistory from './pages/SessionHistory.jsx'
-import Profile from './pages/Profile.jsx'
+import { UserProvider } from './context/UserContext'
+import Nav from './components/Nav'
+import DemoUserSwitcher from './components/DemoUserSwitcher'
+import Landing from './pages/Landing'
+import Browse from './pages/Browse'
+import PartnerProfile from './pages/PartnerProfile'
+import Dashboard from './pages/Dashboard'
+import SessionHistory from './pages/SessionHistory'
+import Profile from './pages/Profile'
 
 function App() {
   return (
     <UserProvider>
       <BrowserRouter>
+        <DemoUserSwitcher />
         <Nav />
         <div className="pb-16 sm:pb-0">
           <Routes>
