@@ -86,7 +86,16 @@ function Dashboard() {
     }
   }
 
-  if (!userId) return <div className="p-8">Add ?userId=YOUR_ID to the URL to view your dashboard.</div>;
+if (!userId) {
+  return (
+    <div className="max-w-2xl mx-auto mt-16 p-6 text-center">
+      <h1 className="text-2xl font-bold text-blue-600 mb-2">Choose a demo user</h1>
+      <p className="text-gray-600">
+        Pick someone from the “Demo as” menu in the top right to see their partnerships and streaks.
+      </p>
+    </div>
+  );
+}
   if (error) return <div className="p-8 text-red-600">{error}</div>;
 
   return (
