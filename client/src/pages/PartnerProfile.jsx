@@ -3,6 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { useUser } from "../context/UserContext";
 
+const NEEDS_USER_MESSAGE =
+  "Pick a demo user from the “Demo as” menu (top right) first.";
+
 function PartnerProfile() {
   const { id } = useParams();
   const { userId: currentUserId } = useUser();
@@ -24,14 +27,17 @@ function PartnerProfile() {
 
   async function handleSendRequest() {
     if (!currentUserId) {
-      setError("You need to be signed in to send a request.");
+      setRequestStatus(NEEDS_USER_MESSAGE);
       return;
     }
 
     try {
       await apiFetch("/partnerships", {
         method: "POST",
-        body: JSON.stringify({ userAId: currentUserId, userBId: parseInt(id) }),
+        body: JSON.stringify({
+          userAId: parseInt(currentUserId),
+          userBId: parseInt(id),
+        }),
       });
       setRequestStatus("Request sent!");
     } catch (err) {
@@ -41,13 +47,16 @@ function PartnerProfile() {
 
   async function handleReport(e) {
     e.preventDefault();
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      setActionStatus(NEEDS_USER_MESSAGE);
+      return;
+    }
 
     try {
       await apiFetch("/safety/reports", {
         method: "POST",
         body: JSON.stringify({
-          reporterId: currentUserId,
+          reporterId: parseInt(currentUserId),
           reportedId: parseInt(id),
           reason: reportReason,
         }),
@@ -61,7 +70,10 @@ function PartnerProfile() {
   }
 
   async function handleBlock() {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      setActionStatus(NEEDS_USER_MESSAGE);
+      return;
+    }
     if (!confirm(`Block ${partner.name}? You won't see each other's profiles or be able to form a partnership.`)) {
       return;
     }
@@ -69,7 +81,10 @@ function PartnerProfile() {
     try {
       await apiFetch("/safety/blocks", {
         method: "POST",
-        body: JSON.stringify({ blockerId: currentUserId, blockedId: parseInt(id) }),
+        body: JSON.stringify({
+          blockerId: parseInt(currentUserId),
+          blockedId: parseInt(id),
+        }),
       });
       setActionStatus("User blocked.");
       setTimeout(() => navigate("/browse"), 1000);
